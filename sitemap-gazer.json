@@ -3,6 +3,38 @@
         {
             "name": "crazygames.com",
             "url": "https://crazygames.com/"
+        },
+        {
+            "name": "poki",
+            "url": "https://poki.com/"
+        },
+        {
+            "name": "nintendo",
+            "url": "https://www.nintendo.com/"
+        },
+        {
+            "name": "gamewith.jp",
+            "url": "https://gamewith.jp/"
+        },
+        {
+            "name": "game8.jp",
+            "url": "https://game8.jp/"
+        },
+        {
+            "name": "altema.jp",
+            "url": "https://altema.jp/"
+        },
+        {
+            "name": "y8.com",
+            "url": "https://www.y8.com/"
+        },
+        {
+            "name": "itch.io",
+            "url": "https://itch.io/"
+        },
+        {
+            "name": "game8.co",
+            "url": "https://game8.co/"
         }
     ],
     "genReadme": true,
