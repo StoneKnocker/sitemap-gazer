@@ -1,18 +1,6 @@
 {
     "sites": [
         {
-            "name": "crazygames.com",
-            "url": "https://crazygames.com/"
-        },
-        {
-            "name": "poki",
-            "url": "https://poki.com/"
-        },
-        {
-            "name": "nintendo",
-            "url": "https://www.nintendo.com/"
-        },
-        {
             "name": "gamewith.jp",
             "url": "https://gamewith.jp/"
         },
