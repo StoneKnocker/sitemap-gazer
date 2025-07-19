@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime
 from typing import Dict, Any
 from pathlib import Path
@@ -11,11 +12,38 @@ from decimal import Decimal
 from sitemap_gazer.models import SitemapGazerConfig, Sitemap, Page, NewsStory
 
 
+def should_skip_url(url: str) -> bool:
+    """Check if URL should be skipped based on blog/archive patterns and old year patterns."""
+    url_lower = url.lower()
+    
+    # Skip URLs containing blog or archive
+    skip_patterns = ['blog', 'archive']
+    if any(pattern in url_lower for pattern in skip_patterns):
+        return True
+    
+    # Skip URLs with 4-digit years older than current year
+    year_matches = re.findall(r'/\d{4}/', url)
+    if year_matches:
+        current_year = datetime.now().year
+        for year_str in year_matches:
+            try:
+                year = int(year_str.strip('/'))
+                if year < current_year:
+                    return True
+            except ValueError:
+                continue
+    
+    return False
+
 def sitemap_to_dict(sitemap: AbstractSitemap) -> Sitemap:
     result = Sitemap(url=sitemap.url, type=sitemap.__class__.__name__)
 
     if isinstance(sitemap, (PagesXMLSitemap, PagesTextSitemap)):
         for page in sitemap.pages:
+            # Skip URLs containing blog or archive
+            if should_skip_url(page.url):
+                continue
+                
             page_dict = Page(
                 url=page.url,
                 priority=(

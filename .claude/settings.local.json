@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(poetry run:*)",
+      "Bash(python:*)",
+      "Bash(poetry install)",
+      "Bash(rm:*)"
+    ],
+    "deny": []
+  }
+}
