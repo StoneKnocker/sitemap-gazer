@@ -19,6 +19,10 @@
         {
             "name": "game8.co",
             "url": "https://game8.co/"
+        },
+        {
+            "name": "playhop.com",
+            "url": "https://playhop.com/"
         }
     ],
     "genReadme": true,
