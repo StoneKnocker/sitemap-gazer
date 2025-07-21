@@ -5,7 +5,10 @@
       "Bash(poetry run:*)",
       "Bash(python:*)",
       "Bash(poetry install)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(ls:*)",
+      "Bash(poetry add:*)",
+      "Bash(pip install:*)"
     ],
     "deny": []
   }
