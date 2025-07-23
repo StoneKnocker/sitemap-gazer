@@ -8,7 +8,8 @@
       "Bash(rm:*)",
       "Bash(ls:*)",
       "Bash(poetry add:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }
