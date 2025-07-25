@@ -1,2 +1,2 @@
-python cleanup_data.py
-poetry run sitemap_gazer
+python3 cleanup_data.py
+poetry run sitemap-gazer
