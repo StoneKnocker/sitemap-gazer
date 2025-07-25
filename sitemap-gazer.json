@@ -9,10 +9,6 @@
             "url": "https://game8.co/"
         },
         {
-            "name": "playhop.com",
-            "url": "https://playhop.com/"
-        },
-        {
             "name": "crazygame.com",
             "url": "https://www.crazygames.com/"
         },
@@ -21,8 +17,8 @@
             "url": "https://poki.com/"
         },
         {
-            "name": "friv.com",
-            "url": "https://www.friv.com/"
+            "name": "playhop.com",
+            "url": "https://playhop.com/"
         }
     ],
     "genReadme": true,
