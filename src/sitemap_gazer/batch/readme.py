@@ -51,7 +51,7 @@ Raw data: [sitemap.json](./data/{site_name}/{timestamp}/sitemap.json) and [diff.
                         diff_data = Diff.model_validate_json(diff_file.read())
 
                     if diff_data.pages:
-                        pages = "\n".join(f"- {page.url}" for page in diff_data.pages)
+                        pages = "\n".join(f"{page.url}" for page in diff_data.pages)
                         details.append(
                             crawl_template.format(
                                 timestamp=timestamp, pages=pages, site_name=site.name

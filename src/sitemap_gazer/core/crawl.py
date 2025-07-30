@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime
 from typing import Dict, Any
 from pathlib import Path
@@ -11,11 +12,52 @@ from decimal import Decimal
 from sitemap_gazer.models import SitemapGazerConfig, Sitemap, Page, NewsStory
 
 
+def should_skip_url(url: str) -> bool:
+    """Check if URL should be skipped based on blog/archive patterns, old year patterns, and multilingual content."""
+    url_lower = url.lower()
+    
+    # Skip URLs containing blog or archive
+    skip_patterns = ['blog', 'archive']
+    if any(pattern in url_lower for pattern in skip_patterns):
+        return True
+    
+    # Skip multilingual content URLs
+    multilingual_patterns = [
+        '/ar/', '/az/', '/be/', '/bg/', '/ca/', '/cs/', '/de/', '/es/', '/fa/',
+        '/fr/', '/he/', '/hi/', '/hu/', '/hy/', '/id/', '/it/', '/ja/', '/ka/',
+        '/kk/', '/nl/', '/pl/', '/pt/', '/ro/', '/ru/', '/sk/', '/sr/', '/th/',
+        '/tk/', '/tr/', '/uk/', '/uz/', '/vi/', '/zh/', '/dk/', '/jp/'
+    ]
+    if any(pattern in url_lower for pattern in multilingual_patterns):
+        return True
+    
+    # Skip URLs with 4-digit years older than current year
+    year_matches = re.findall(r'/\d{4}/', url)
+    if year_matches:
+        current_year = datetime.now().year
+        for year_str in year_matches:
+            try:
+                year = int(year_str.strip('/'))
+                if year < current_year:
+                    return True
+            except ValueError:
+                continue
+    
+    return False
+
 def sitemap_to_dict(sitemap: AbstractSitemap) -> Sitemap:
     result = Sitemap(url=sitemap.url, type=sitemap.__class__.__name__)
+    
+    # Skip entire sitemap if its URL matches skip patterns - AGGRESSIVE FILTERING
+    if should_skip_url(sitemap.url):
+        return result
 
     if isinstance(sitemap, (PagesXMLSitemap, PagesTextSitemap)):
         for page in sitemap.pages:
+            # Skip URLs containing blog or archive
+            if should_skip_url(page.url):
+                continue
+                
             page_dict = Page(
                 url=page.url,
                 priority=(
@@ -44,7 +86,9 @@ def sitemap_to_dict(sitemap: AbstractSitemap) -> Sitemap:
             result.pages.append(page_dict)
     elif hasattr(sitemap, "sub_sitemaps"):
         for sub_sitemap in sitemap.sub_sitemaps:
-            result.sitemaps.append(sitemap_to_dict(sub_sitemap))
+            # Skip sub-sitemap entirely if its URL matches skip patterns
+            if not should_skip_url(sub_sitemap.url):
+                result.sitemaps.append(sitemap_to_dict(sub_sitemap))
 
     return result
 

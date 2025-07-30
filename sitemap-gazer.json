@@ -1,0 +1,22 @@
+{
+    "sites": [
+        {
+            "name": "y8.com",
+            "url": "https://www.y8.com/"
+        },
+        {
+            "name": "game8.co",
+            "url": "https://game8.co/"
+        },
+        {
+            "name": "crazygame.com",
+            "url": "https://www.crazygames.com/"
+        },
+        {
+            "name": "poki.com",
+            "url": "https://poki.com/"
+        }
+    ],
+    "genReadme": true,
+    "output_dir": "data"
+}
