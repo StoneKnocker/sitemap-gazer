@@ -60,23 +60,31 @@ Raw data: [sitemap.json](./data/{site_name}/{timestamp}/sitemap.json) and [diff.
         return "\n".join(details)
 
     def generate_txt_files():
+        from datetime import datetime
+        
+        today = datetime.now().strftime("%Y%m%d")
+        
         for site in config.sites:
             site_crawls = get_timestamped_dirs(
                 Path(config.output_dir) / site.name, limit=1
             )
 
             for crawl in site_crawls:
-                diff_path = crawl / "diff.json"
+                timestamp = crawl.name
+                date_part = timestamp.split("_")[0]
+                
+                if date_part == today:
+                    diff_path = crawl / "diff.json"
 
-                if diff_path.exists():
-                    with diff_path.open() as diff_file:
-                        diff_data = Diff.model_validate_json(diff_file.read())
+                    if diff_path.exists():
+                        with diff_path.open() as diff_file:
+                            diff_data = Diff.model_validate_json(diff_file.read())
 
-                    if diff_data.pages:
-                        urls = " ".join(page.url for page in diff_data.pages)
-                        txt_path = Path.cwd() / f"{site.name}.txt"
-                        with txt_path.open("w") as txt_file:
-                            txt_file.write(urls)
+                        if diff_data.pages:
+                            urls = " ".join(page.url for page in diff_data.pages)
+                            txt_path = Path.cwd() / f"{site.name}.txt"
+                            with txt_path.open("w") as txt_file:
+                                txt_file.write(urls)
 
     with readme_path.open("w") as f:
         f.write(
