@@ -39,7 +39,7 @@ Raw data: [sitemap.json](./data/{site_name}/{timestamp}/sitemap.json) and [diff.
             details.append(site_template.format(site_name=site.name))
 
             site_crawls = get_timestamped_dirs(
-                Path(config.output_dir) / site.name, limit=3
+                Path(config.output_dir) / site.name, limit=1
             )
 
             for crawl in site_crawls:
