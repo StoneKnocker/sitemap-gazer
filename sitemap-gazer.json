@@ -1,0 +1,24 @@
+{
+  "sites": [
+    {
+      "name": "pollo",
+      "url": "https://pollo.ai"
+    },
+    {
+      "name": "fal",
+      "url": "https://fal.ai"
+    },
+    {
+      "name":"notegpt",
+      "url":"https://notegpt.io"
+    },
+    {
+      "name":"higgsfield",
+      "url":"https://higgsfield.ai"
+    }
+  ],
+  "genReadme": true,
+  "output_dir": "data"
+}
+
+
