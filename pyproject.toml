@@ -1,31 +1,33 @@
-[tool.poetry]
+[project]
 name = "sitemap-gazer"
 version = "0.0.2"
 description = "A CLI to fetch, diff and monitor sitemaps."
-authors = ["HackerQED <HackerQED@gmail.com>"]
+authors = [{name = "HackerQED", email = "HackerQED@gmail.com"}]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "sitemap_gazer", from = "src"}]
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "pydantic>=2.9.2",
+    "pydantic-settings>=2.6.0",
+    "click>=8.1.7",
+    "ultimate-sitemap-parser>=0.5",
+]
 
-[tool.poetry.scripts]
+[project.optional-dependencies]
+dev = [
+    "black>=24.10.0",
+]
+
+[project.scripts]
 sitemap-gazer = "sitemap_gazer.__main__:cli"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-pydantic = "^2.9.2"
-pydantic-settings = "^2.6.0"
-click = "^8.1.7"
-ultimate-sitemap-parser = "^0.5"
-
-
-[tool.poetry.group.dev.dependencies]
-black = "^24.10.0"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

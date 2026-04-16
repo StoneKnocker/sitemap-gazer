@@ -42,13 +42,16 @@ sitemap-gazer
 To run as developer:
 
 ```bash
-poetry install
-poetry run sitemap-gazer
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+sitemap-gazer
 ```
 
 To build and install locally:
 
 ```bash
-poetry build
-pip install dist/sitemap_gazer-0.1.0-py3-none-any.whl
+pip install build
+python -m build
+pip install dist/sitemap_gazer-0.0.2-py3-none-any.whl
 ```
