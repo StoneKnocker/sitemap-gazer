@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from pathlib import Path
 
 from sitemap_gazer.models import SitemapGazerConfig, Diff, Page
@@ -6,7 +7,8 @@ from sitemap_gazer.utils import get_timestamped_dirs
 
 
 def readme(config: SitemapGazerConfig):
-    readme_path = Path.cwd() / "README.md"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    readme_path = Path.cwd() / f"README_{timestamp}.md"
 
     template = """# Sitemap Gazer Report
 
@@ -39,7 +41,7 @@ Raw data: [sitemap.json](./data/{site_name}/{timestamp}/sitemap.json) and [diff.
             details.append(site_template.format(site_name=site.name))
 
             site_crawls = get_timestamped_dirs(
-                Path(config.output_dir) / site.name, limit=3
+                Path(config.output_dir) / site.name, limit=1
             )
 
             for crawl in site_crawls:
