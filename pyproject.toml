@@ -1,6 +1,6 @@
 [project]
 name = "sitemap-gazer"
-version = "0.0.3"
+version = "0.0.4"
 description = "A CLI to fetch, diff and monitor sitemaps."
 authors = [{name = "HackerQED", email = "HackerQED@gmail.com"}]
 license = "MIT"

@@ -1,20 +1,25 @@
 {
   "sites": [
     {
-      "name": "pollo",
-      "url": "https://pollo.ai/"
+      "name": "pollo.ai",
+      "url": "https://pollo.ai/",
+      "strip_locales": true
     },
     {
-      "name": "fal",
+      "name": "fal.ai",
       "url": "https://fal.ai/"
     },
     {
-      "name":"notegpt",
-      "url":"https://notegpt.io/"
+      "name":"media.io",
+      "url":"https://www.media.io/"
     },
     {
-      "name":"higgsfield",
-      "url":"https://higgsfield.ai/"
+      "name":"supermaker",
+      "url":"https://supermaker.ai/"
+    },
+    {
+      "name":"openart.ai",
+      "url":"https://openart.ai/"
     }
   ],
   "genReadme": true,

@@ -1,30 +1,28 @@
-import os
 import json
-from typing import Dict
 from pathlib import Path
 
 import click
+
 from sitemap_gazer.models import SitemapGazerConfig
 
 
-def create_config_file(output_dir: str) -> str:
+def create_config_file(output_dir: Path | str) -> Path:
     config = SitemapGazerConfig()
-
-    file_path = os.path.join(output_dir, "sitemap-gazer.json")
-
-    if os.path.exists(file_path):
+    file_path = Path(output_dir) / "sitemap-gazer.json"
+    if file_path.exists():
         raise click.ClickException(f"Config file already exists: {file_path}")
 
-    with open(file_path, "w") as f:
-        config_dict = config.model_dump()
-        config_dict["output_dir"] = str(
-            config_dict["output_dir"]
-        )  # Handle JSON unserializable Posix Path
-        json.dump(config_dict, f, indent=2)
-
+    file_path.write_text(
+        json.dumps(config.model_dump(mode="json"), indent=2) + "\n",
+        encoding="utf-8",
+    )
     return file_path
 
 
-def load_config_file(file_path: str) -> SitemapGazerConfig:
-    with open(file_path, "r") as f:
-        return SitemapGazerConfig.model_validate_json(f.read())
+def load_config_file(file_path: Path | str) -> SitemapGazerConfig:
+    path = Path(file_path)
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Config file not found: {path}") from None
+    return SitemapGazerConfig.model_validate_json(raw)

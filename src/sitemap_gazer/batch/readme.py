@@ -1,69 +1,107 @@
-import json
 from datetime import datetime
 from pathlib import Path
 
-from sitemap_gazer.models import SitemapGazerConfig, Diff, Page
-from sitemap_gazer.utils import get_timestamped_dirs
+from sitemap_gazer.core.run import SiteResult
+from sitemap_gazer.models import SitemapGazerConfig
+from sitemap_gazer.store import changes_path, read_changes
+from sitemap_gazer.urls import group_urls
+
+REPORT_HEADING = "# Sitemap Gazer Report"
 
 
-def readme(config: SitemapGazerConfig):
+def report_path(output_dir: Path) -> Path:
+    """Put the report beside the crawl data, never over a project README."""
+    preferred = output_dir / "README.md"
+    if _is_foreign_file(preferred):
+        return output_dir / "sitemap-report.md"
+    return preferred
+
+
+def _is_foreign_file(path: Path) -> bool:
+    if not path.exists() or not path.is_file():
+        return False
+    with path.open(encoding="utf-8", errors="replace") as handle:
+        first = handle.readline()
+    return not first.startswith(REPORT_HEADING)
+
+
+def write_readme(
+    config: SitemapGazerConfig,
+    results: list[SiteResult],
+    timestamp: str,
+) -> Path:
+    readme_path = report_path(config.output_dir)
+    readme_path.parent.mkdir(parents=True, exist_ok=True)
+    by_name = {result.name: result for result in results}
+    sections = [
+        REPORT_HEADING,
+        "",
+        _site_links(config),
+        "",
+        f"Last run: {timestamp}",
+        "",
+    ]
+    if results:
+        for result in results:
+            sections.append(f"- {result.name}: {result.message}")
+        sections.append("")
+
+    for site in config.sites:
+        anchor = _anchor(site.name)
+        sections.append(f'<a id="{anchor}"></a>')
+        sections.append(f"## {site.name}")
+        sections.append("")
+        records = read_changes(
+            changes_path(config.output_dir / site.name), config.readme_limit
+        )
+        if not records:
+            note = by_name.get(site.name)
+            if note and note.status == "initial":
+                sections.append(
+                    "Initial crawl recorded. Later runs list only new URLs."
+                )
+            else:
+                sections.append("No new URLs recorded yet.")
+            sections.append("")
+            continue
+        for record in records:
+            urls = record.get("urls") or []
+            sections.append(f"### {record.get('timestamp', '')}")
+            sections.append("")
+            if not urls:
+                sections.append("No new URLs.")
+                sections.append("")
+                continue
+            for base, suffixes in group_urls(urls, site.group_suffixes):
+                sections.append(f"- {base}")
+                for suffix in suffixes:
+                    sections.append(f"  - {suffix}")
+            sections.append("")
+
+    sections.append(
+        "Crawls that find nothing new are omitted. "
+        "A crawl that returns no pages, or fewer than "
+        f"{config.min_page_ratio:.0%} of the baseline, does not update the known URL set."
+    )
+    sections.append("")
+    readme_path.write_text("\n".join(sections), encoding="utf-8")
+    return readme_path
+
+
+def readme(config: SitemapGazerConfig, cwd: Path | None = None) -> Path:
+    cwd = cwd or Path.cwd()
+    output_dir = config.output_dir
+    if not output_dir.is_absolute():
+        output_dir = cwd / output_dir
+    config = config.model_copy(update={"output_dir": output_dir})
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    readme_path = Path.cwd() / f"README_{timestamp}.md"
+    return write_readme(config, [], timestamp)
 
-    template = """# Sitemap Gazer Report
 
-{site_links}
+def _site_links(config: SitemapGazerConfig) -> str:
+    return "\n\n".join(f"[{site.name}](#{_anchor(site.name)})" for site in config.sites)
 
-{site_details}
 
-Note: Crawls without changes or initial crawls may not be shown in detail.
-"""
-
-    site_template = """## {site_name}
-"""
-
-    crawl_template = """### {timestamp}
-
-{pages}
-
-Raw data: [sitemap.json](./data/{site_name}/{timestamp}/sitemap.json) and [diff.json](./data/{site_name}/{timestamp}/diff.json)
-"""
-
-    def generate_site_links():
-        return "\n\n".join(
-            f"[{site.name}](#{site.name.replace('.', '').lower()})"  # markdown link
-            for site in config.sites
-        )
-
-    def generate_site_details():
-        details = []
-        for site in config.sites:
-            details.append(site_template.format(site_name=site.name))
-
-            site_crawls = get_timestamped_dirs(
-                Path(config.output_dir) / site.name, limit=1
-            )
-
-            for crawl in site_crawls:
-                timestamp = crawl.name
-                diff_path = crawl / "diff.json"
-
-                if diff_path.exists():
-                    with diff_path.open() as diff_file:
-                        diff_data = Diff.model_validate_json(diff_file.read())
-
-                    if diff_data.pages:
-                        pages = "\n".join(f"- {page.url}" for page in diff_data.pages)
-                        details.append(
-                            crawl_template.format(
-                                timestamp=timestamp, pages=pages, site_name=site.name
-                            )
-                        )
-        return "\n".join(details)
-
-    with readme_path.open("w") as f:
-        f.write(
-            template.format(
-                site_links=generate_site_links(), site_details=generate_site_details()
-            )
-        )
+def _anchor(name: str) -> str:
+    slug = "".join(character.lower() for character in name if character.isalnum())
+    return f"site-{slug or 'site'}"

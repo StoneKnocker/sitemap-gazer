@@ -4,7 +4,7 @@
 
 一个帮你轻易监控网站变更的工具。
 
-它爬取 sitemap，保存在本地，比对上一次爬取，并生成一个 README 报告方便你查看。支持一份报告同时监控多个 sitemap。
+它爬取 sitemap，记住见过的每个 URL，并把新增 URL 写进 data/README.md。一份报告可以同时监控多个站点。抓取失败、返回 0 页，或页数明显少于上次有效抓取时，这次结果会被丢掉。一个站点失败不会挡住其他站点。
 
 它也可以直接在 Github Action 运行，示例： [hackerqed/sitemap-gazer-example](https://github.com/hackerqed/sitemap-gazer-example)
 
@@ -25,16 +25,23 @@ sitemap-gazer init
 #   "sites": [
 #     {
 #       "name": "crazygames.com",
-#       "url": "https://crazygames.com/"
+#       "url": "https://crazygames.com/",
+#       "sitemap_url": "https://crazygames.com/sitemap.xml",
+#       "include": [],
+#       "exclude": [],
+#       "strip_locales": false,
+#       "group_suffixes": []
 #     }
 #   ],
 #   "genReadme": true,
-#   "output_dir": "data"
+#   "output_dir": "data",
+#   "readme_limit": 10,
+#   "min_page_ratio": 0.8
 # }
 
 sitemap-gazer
-# 爬取数据，保存到 ./data/
-# README.md 会自动生成
+# 爬取数据，保存到 ./data/<site>/
+# 新增 URL 写到 ./data/README.md，不改项目根目录的 README.md
 ```
 
 ## 开发
@@ -53,5 +60,5 @@ sitemap-gazer
 ```bash
 pip install build
 python -m build
-pip install dist/sitemap_gazer-0.0.2-py3-none-any.whl
+pip install dist/sitemap_gazer-0.0.4-py3-none-any.whl
 ```

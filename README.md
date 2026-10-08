@@ -4,7 +4,7 @@
 
 A tool that helps you easily monitor website changes.
 
-It crawls sitemaps, saves them locally, compares with the previous crawl, and generates a README report for easy viewing. It supports monitoring multiple sitemaps in a single report.
+It crawls sitemaps, remembers every URL it has seen, and writes new URLs to data/README.md. One report can watch several sites. A crawl that fails, returns no pages, or is much smaller than the baseline is ignored, and one site failing does not stop the others.
 
 It can also run in a GitHub Actions workflow: [hackerqed/sitemap-gazer-example](https://github.com/hackerqed/sitemap-gazer-example)
 
@@ -25,16 +25,23 @@ sitemap-gazer init
 #   "sites": [
 #     {
 #       "name": "crazygames.com",
-#       "url": "https://crazygames.com/"
+#       "url": "https://crazygames.com/",
+#       "sitemap_url": "https://crazygames.com/sitemap.xml",
+#       "include": [],
+#       "exclude": [],
+#       "strip_locales": false,
+#       "group_suffixes": []
 #     }
 #   ],
 #   "genReadme": true,
-#   "output_dir": "data"
+#   "output_dir": "data",
+#   "readme_limit": 10,
+#   "min_page_ratio": 0.8
 # }
 
 sitemap-gazer
-# crawl data, save to ./data/
-# README.md will be generated automatically
+# crawl data, save to ./data/<site>/
+# new URLs are listed in ./data/README.md, not the project README.md
 ```
 
 ## Development
@@ -53,5 +60,5 @@ To build and install locally:
 ```bash
 pip install build
 python -m build
-pip install dist/sitemap_gazer-0.0.2-py3-none-any.whl
+pip install dist/sitemap_gazer-0.0.4-py3-none-any.whl
 ```

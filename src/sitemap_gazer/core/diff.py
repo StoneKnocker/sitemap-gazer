@@ -1,53 +1,57 @@
-from pathlib import Path
-from typing import List
-from sitemap_gazer.models import Page, Sitemap, Diff
+from dataclasses import dataclass
+
+from sitemap_gazer.store import SiteState
 
 
-def diff(previous_data_dir: Path, current_data_dir: Path) -> List[Page]:
-    # Load previous sitemap
-    previous_sitemap_path = previous_data_dir / "sitemap.json"
-    with open(previous_sitemap_path, "r") as f:
-        previous_sitemap = Sitemap.model_validate_json(f.read())
+@dataclass(frozen=True)
+class CrawlDecision:
+    accept: bool
+    reason: str = ""
 
-    # Load current sitemap
-    current_sitemap_path = current_data_dir / "sitemap.json"
-    with open(current_sitemap_path, "r") as f:
-        current_sitemap = Sitemap.model_validate_json(f.read())
 
-    # Extract URLs from previous sitemap
-    previous_urls = set()
+def real_failures(
+    failures: list[tuple[str, str]], success_urls: set[str]
+) -> list[tuple[str, str]]:
+    real = []
+    for url, reason in failures:
+        if url in success_urls:
+            continue
+        if "Recursion detected" in reason:
+            continue
+        real.append((url, reason))
+    return real
 
-    def extract_urls(sitemap: Sitemap):
-        for page in sitemap.pages:
-            previous_urls.add(page.url)
-        for sub_sitemap in sitemap.sitemaps:
-            extract_urls(sub_sitemap)
 
-    extract_urls(previous_sitemap)
+def assess_crawl(
+    *,
+    page_count: int,
+    failures: list[tuple[str, str]],
+    success_urls: set[str],
+    state: SiteState | None,
+    ratio_reliable: bool,
+    min_page_ratio: float,
+) -> CrawlDecision:
+    if page_count == 0:
+        return CrawlDecision(False, "crawl returned no pages")
 
-    # Find new URLs in current sitemap
-    new_pages = []
+    real = real_failures(failures, success_urls)
+    if (
+        ratio_reliable
+        and state is not None
+        and state.last_good_count > 0
+        and page_count < state.last_good_count * min_page_ratio
+    ):
+        return CrawlDecision(
+            False,
+            (
+                f"{page_count} pages is below {min_page_ratio:.0%} of the baseline "
+                f"({state.last_good_count})"
+            ),
+        )
 
-    def find_new_urls(sitemap: Sitemap):
-        for page in sitemap.pages:
-            if page.url not in previous_urls:
-                new_pages.append(page)
-        for sub_sitemap in sitemap.sitemaps:
-            find_new_urls(sub_sitemap)
+    if real:
+        shown = ", ".join(url for url, _reason in real[:5])
+        extra = f" and {len(real) - 5} more" if len(real) > 5 else ""
+        return CrawlDecision(True, f"failed sitemaps: {shown}{extra}")
 
-    find_new_urls(current_sitemap)
-
-    # Remove duplicate URLs
-    unique_new_pages = []
-    seen_urls = set()
-    for page in new_pages:
-        if page.url not in seen_urls:
-            unique_new_pages.append(page)
-            seen_urls.add(page.url)
-
-    # Save diff to diff.json in current data directory
-    diff_path = current_data_dir / "diff.json"
-    with open(diff_path, "w") as f:
-        f.write(Diff(pages=unique_new_pages).model_dump_json(indent=2))
-
-    return unique_new_pages
+    return CrawlDecision(True)
