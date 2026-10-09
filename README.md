@@ -4,7 +4,7 @@
 
 A tool that helps you easily monitor website changes.
 
-It crawls sitemaps, remembers every URL it has seen, and writes new URLs to data/README.md. One report can watch several sites. A crawl that fails, returns no pages, or is much smaller than the baseline is ignored, and one site failing does not stop the others.
+It crawls sitemaps, remembers every URL it has seen, and writes new URLs to data/README.md. Each run rewrites that report: the new URLs from that run are listed at the top, and recent history for each site follows. One report can watch several sites. A crawl that fails, returns no pages, or is much smaller than the baseline is ignored, and one site failing does not stop the others.
 
 It can also run in a GitHub Actions workflow: [hackerqed/sitemap-gazer-example](https://github.com/hackerqed/sitemap-gazer-example)
 

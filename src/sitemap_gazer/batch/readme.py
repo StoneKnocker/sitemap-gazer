@@ -36,15 +36,16 @@ def write_readme(
     sections = [
         REPORT_HEADING,
         "",
-        _site_links(config),
-        "",
         f"Last run: {timestamp}",
         "",
     ]
     if results:
-        for result in results:
-            sections.append(f"- {result.name}: {result.message}")
-        sections.append("")
+        _append_this_run(sections, config, results)
+
+    sections.append("## Recent changes")
+    sections.append("")
+    sections.append(_site_links(config))
+    sections.append("")
 
     for site in config.sites:
         anchor = _anchor(site.name)
@@ -72,11 +73,7 @@ def write_readme(
                 sections.append("No new URLs.")
                 sections.append("")
                 continue
-            for base, suffixes in group_urls(urls, site.group_suffixes):
-                sections.append(f"- {base}")
-                for suffix in suffixes:
-                    sections.append(f"  - {suffix}")
-            sections.append("")
+            _append_urls(sections, urls, site.group_suffixes)
 
     sections.append(
         "Crawls that find nothing new are omitted. "
@@ -96,6 +93,41 @@ def readme(config: SitemapGazerConfig, cwd: Path | None = None) -> Path:
     config = config.model_copy(update={"output_dir": output_dir})
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     return write_readme(config, [], timestamp)
+
+
+def _append_this_run(
+    sections: list[str], config: SitemapGazerConfig, results: list[SiteResult]
+) -> None:
+    """Lead with this crawl's new URLs. History stays under Recent changes."""
+    new_count = sum(len(result.new_urls) for result in results)
+    sections.append(f"## New this run ({new_count})")
+    sections.append("")
+    sites = {site.name: site for site in config.sites}
+    quiet: list[SiteResult] = []
+    for result in results:
+        if not result.new_urls:
+            quiet.append(result)
+            continue
+        site = sites.get(result.name)
+        suffixes = site.group_suffixes if site else []
+        sections.append(f"### {result.name} ({len(result.new_urls)})")
+        sections.append("")
+        _append_urls(sections, result.new_urls, suffixes)
+    if new_count == 0:
+        sections.append("No new URLs.")
+        sections.append("")
+    for result in quiet:
+        sections.append(f"- {result.name}: {result.message}")
+    if quiet:
+        sections.append("")
+
+
+def _append_urls(sections: list[str], urls: list[str], suffixes: list[str]) -> None:
+    for base, matched in group_urls(urls, suffixes):
+        sections.append(f"- {base}")
+        for suffix in matched:
+            sections.append(f"  - {suffix}")
+    sections.append("")
 
 
 def _site_links(config: SitemapGazerConfig) -> str:

@@ -395,12 +395,47 @@ class RunTests(unittest.TestCase):
             text = (root / "data" / "README.md").read_text(encoding="utf-8")
             records = read_changes(root / "data" / "fal" / "changes.jsonl", limit=10)
 
-        self.assertIn("### 20261008_020202", text)
-        self.assertIn("- https://fal.ai/models/flux", text)
-        self.assertIn("  - /examples", text)
-        self.assertIn("- https://fal.ai/startups", text)
-        self.assertNotIn("### 20261008_010101", text)
+        this_run, _, history = text.partition("## Recent changes")
+        self.assertIn("## New this run (2)", this_run)
+        self.assertIn("### fal (2)", this_run)
+        self.assertIn("- https://fal.ai/models/flux", this_run)
+        self.assertIn("  - /examples", this_run)
+        self.assertIn("- https://fal.ai/startups", this_run)
+        self.assertNotIn("20261008_010101", this_run)
+        self.assertIn("### 20261008_020202", history)
+        self.assertNotIn("### 20261008_010101", history)
         self.assertEqual(records[0]["timestamp"], "20261008_020202")
+
+    def test_readme_hides_older_urls_from_this_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            phase = {"n": 0}
+
+            def crawl(_site):
+                phase["n"] += 1
+                if phase["n"] == 1:
+                    return self._fetched("https://example.com/a")
+                if phase["n"] == 2:
+                    return self._fetched(
+                        "https://example.com/a", "https://example.com/c"
+                    )
+                return self._fetched("https://example.com/a", "https://example.com/c")
+
+            config = _config(root, [_site()])
+            run(config, cwd=root, crawl_fn=crawl, timestamp="20261008_010101")
+            run(config, cwd=root, crawl_fn=crawl, timestamp="20261008_020202")
+            second = (root / "data" / "README.md").read_text(encoding="utf-8")
+            run(config, cwd=root, crawl_fn=crawl, timestamp="20261008_030303")
+            third = (root / "data" / "README.md").read_text(encoding="utf-8")
+
+        found, _, history = second.partition("## Recent changes")
+        self.assertIn("https://example.com/c", found)
+        self.assertNotIn("https://example.com/a", found)
+        self.assertIn("https://example.com/c", history)
+        quiet, _, _ = third.partition("## Recent changes")
+        self.assertIn("## New this run (0)", quiet)
+        self.assertIn("No new URLs.", quiet)
+        self.assertNotIn("https://example.com/c", quiet)
 
 
 class InitTests(unittest.TestCase):
