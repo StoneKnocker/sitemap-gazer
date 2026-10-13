@@ -393,20 +393,26 @@ class RunTests(unittest.TestCase):
             run(config, cwd=root, crawl_fn=crawl, timestamp="20261008_010101")
             run(config, cwd=root, crawl_fn=crawl, timestamp="20261008_020202")
             text = (root / "data" / "README.md").read_text(encoding="utf-8")
+            site_file = (root / "data" / "fal" / "new-urls.md").read_text(
+                encoding="utf-8"
+            )
             records = read_changes(root / "data" / "fal" / "changes.jsonl", limit=10)
 
-        this_run, _, history = text.partition("## Recent changes")
-        self.assertIn("## New this run (2)", this_run)
-        self.assertIn("### fal (2)", this_run)
-        self.assertIn("- https://fal.ai/models/flux", this_run)
-        self.assertIn("  - /examples", this_run)
-        self.assertIn("- https://fal.ai/startups", this_run)
-        self.assertNotIn("20261008_010101", this_run)
-        self.assertIn("### 20261008_020202", history)
-        self.assertNotIn("### 20261008_010101", history)
+        self.assertIn("Date: 2026-10-08", text)
+        self.assertIn("## Today (2 new)", text)
+        self.assertIn("data/fal/new-urls.md: 2 new URLs", text)
+        self.assertNotIn("new-urls.md#", text)
+        self.assertNotIn("https://fal.ai/", text)
+        self.assertNotIn("## Recent changes", text)
+        self.assertNotIn("20261008_010101", text)
+        self.assertIn("- https://fal.ai/models/flux", site_file)
+        self.assertIn("  - /examples", site_file)
+        self.assertIn("- https://fal.ai/startups", site_file)
+        self.assertIn("### 20261008_020202", site_file)
+        self.assertNotIn("20261008_010101", site_file)
         self.assertEqual(records[0]["timestamp"], "20261008_020202")
 
-    def test_readme_hides_older_urls_from_this_run(self):
+    def test_readme_lists_only_today_and_keeps_urls_in_the_site_file(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             phase = {"n": 0}
@@ -425,17 +431,86 @@ class RunTests(unittest.TestCase):
             run(config, cwd=root, crawl_fn=crawl, timestamp="20261008_010101")
             run(config, cwd=root, crawl_fn=crawl, timestamp="20261008_020202")
             second = (root / "data" / "README.md").read_text(encoding="utf-8")
+            site_file = (root / "data" / "example" / "new-urls.md").read_text(
+                encoding="utf-8"
+            )
             run(config, cwd=root, crawl_fn=crawl, timestamp="20261008_030303")
             third = (root / "data" / "README.md").read_text(encoding="utf-8")
+            run(config, cwd=root, crawl_fn=crawl, timestamp="20261009_010101")
+            fourth = (root / "data" / "README.md").read_text(encoding="utf-8")
+            site_after = (root / "data" / "example" / "new-urls.md").read_text(
+                encoding="utf-8"
+            )
 
-        found, _, history = second.partition("## Recent changes")
-        self.assertIn("https://example.com/c", found)
-        self.assertNotIn("https://example.com/a", found)
-        self.assertIn("https://example.com/c", history)
-        quiet, _, _ = third.partition("## Recent changes")
-        self.assertIn("## New this run (0)", quiet)
-        self.assertIn("No new URLs.", quiet)
-        self.assertNotIn("https://example.com/c", quiet)
+        self.assertIn("## Today (1 new)", second)
+        self.assertIn("data/example/new-urls.md: 1 new URLs", second)
+        self.assertNotIn("new-urls.md#", second)
+        self.assertNotIn("https://example.com/c", second)
+        self.assertNotIn("https://example.com/a", second)
+        self.assertIn("https://example.com/c", site_file)
+        self.assertNotIn("https://example.com/a", site_file)
+        self.assertIn("## Today (1 new)", third)
+        self.assertIn("data/example/new-urls.md: 1 new URLs", third)
+        self.assertNotIn("No new URLs.", third)
+        self.assertNotIn("https://example.com/c", third)
+        self.assertIn("Date: 2026-10-09", fourth)
+        self.assertIn("## Today (0 new)", fourth)
+        self.assertIn("No new URLs.", fourth)
+        self.assertNotIn("https://example.com/c", fourth)
+        self.assertNotIn("2026-10-08", fourth)
+        self.assertIn("## 2026-10-08", site_after)
+        self.assertIn("https://example.com/c", site_after)
+
+    def test_site_file_keeps_only_the_newest_records(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            phase = {"n": 0}
+
+            def crawl(_site):
+                phase["n"] += 1
+                urls = ["https://example.com/a"]
+                if phase["n"] >= 2:
+                    urls.append("https://example.com/b")
+                if phase["n"] >= 3:
+                    urls.append("https://example.com/c")
+                return self._fetched(*urls)
+
+            config = _config(root, [_site()], readme_limit=1)
+            run(config, cwd=root, crawl_fn=crawl, timestamp="20261008_010101")
+            run(config, cwd=root, crawl_fn=crawl, timestamp="20261008_020202")
+            run(config, cwd=root, crawl_fn=crawl, timestamp="20261009_010101")
+            text = (root / "data" / "example" / "new-urls.md").read_text(
+                encoding="utf-8"
+            )
+            readme = (root / "data" / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("https://example.com/c", text)
+        self.assertNotIn("https://example.com/b", text)
+        self.assertIn("## 2026-10-09", text)
+        self.assertNotIn("2026-10-08", text)
+        self.assertIn("## Today (1 new)", readme)
+        self.assertIn("data/example/new-urls.md: 1 new URLs", readme)
+        self.assertNotIn("new-urls.md#", readme)
+
+    def test_readme_command_keeps_the_stored_crawl_time(self):
+        from sitemap_gazer.batch.readme import readme
+        from sitemap_gazer.store import SiteState, state_path, write_state
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config = _config(root, [_site()])
+            site_dir = root / "data" / "example"
+            site_dir.mkdir(parents=True)
+            write_state(
+                state_path(site_dir),
+                SiteState(last_good_count=4, updated_at="2026-10-08T01:02:03"),
+            )
+            readme(config, cwd=root)
+            text = (root / "data" / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("Last run: 20261008_010203", text)
+        self.assertIn("## Today (0 new)", text)
+        self.assertIn("example: 0 new URLs (known 4)", text)
 
 
 class InitTests(unittest.TestCase):

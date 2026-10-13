@@ -4,7 +4,7 @@
 
 一个帮你轻易监控网站变更的工具。
 
-它爬取 sitemap，记住见过的每个 URL，并把新增 URL 写进 data/README.md。每次运行都会重写这份报告：开头是本次新发现的 URL，后面才是各站最近的历史记录。一份报告可以同时监控多个站点。抓取失败、返回 0 页，或页数明显少于上次有效抓取时，这次结果会被丢掉。一个站点失败不会挡住其他站点。
+它爬取 sitemap，记住见过的每个 URL，并把当天的报告写进 data/README.md。这份报告只列当天，每个站点一行。各站的新增 URL 写到 `data/<site>/new-urls.md`，按时间从新到旧，最多保留 readme_limit 条记录。一份报告可以同时监控多个站点。抓取失败、返回 0 页，或页数明显少于上次有效抓取时，这次结果会被丢掉。一个站点失败不会挡住其他站点。
 
 它也可以直接在 Github Action 运行，示例： [hackerqed/sitemap-gazer-example](https://github.com/hackerqed/sitemap-gazer-example)
 
@@ -41,7 +41,8 @@ sitemap-gazer init
 
 sitemap-gazer
 # 爬取数据，保存到 ./data/<site>/
-# 新增 URL 写到 ./data/README.md，不改项目根目录的 README.md
+# 当天报告写到 ./data/README.md
+# 各站新增 URL 写到 ./data/<site>/new-urls.md
 ```
 
 ## 开发

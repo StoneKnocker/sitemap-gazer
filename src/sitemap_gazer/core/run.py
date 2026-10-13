@@ -62,7 +62,7 @@ def run(
     if config.genReadme:
         from sitemap_gazer.batch.readme import write_readme
 
-        report = write_readme(config, results, timestamp)
+        report = write_readme(config, results, timestamp, cwd=cwd)
         _log(f"Updating {_relative(report, cwd)}")
     return results
 

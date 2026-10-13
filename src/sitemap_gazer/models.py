@@ -31,7 +31,11 @@ class SitemapGazerConfig(BaseModel):
     genReadme: bool = True
     output_dir: Path = Path("./data")
     readme_limit: int = Field(
-        default=10, description="How many change records to show per site"
+        default=10,
+        description=(
+            "How many newest change records to keep in each site's new-urls.md. "
+            "0 keeps every run. The daily README lists only the current day."
+        ),
     )
     min_page_ratio: float = Field(
         default=0.8,
